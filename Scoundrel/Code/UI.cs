@@ -39,6 +39,25 @@ namespace Scoundrel.Code
         public Color color = Color.Transparent; // the relevant colour of the UI object
         public Axis LayoutDirection = Axis.Y;
 
+        // wrappers for getting/setting the size and position of objects on arbitrary axes
+        public FitType getFitType(Axis axis) => 
+            axis == Axis.X ? widthFit : heightFit;
+        public int getSize(Axis axis) => 
+            axis==Axis.X? body.Width : body.Height;
+        public void setSize(Axis axis, int size) 
+        { if (axis == Axis.X) body.Width = size; else body.Height = size; }
+        public int getPos(Axis axis) => 
+            axis == Axis.X ? body.X : body.Y;
+        public void setPos(Axis axis, int pos) 
+        { if (axis == Axis.X) body.X = pos; else body.Y = pos; }
+        // aggregate functions for child sizing
+        public int getMaxChildSize(Axis axis) =>
+            Enumerable.Aggregate(children, Int32.MinValue, (int total, UINode node)=>Max(total, node.UpdateSize(axis)) );
+        public int getTotalChildSize(Axis axis) =>
+            Enumerable.Aggregate(children, 0, (int total, UINode node) => (total + node.UpdateSize(axis)) );
+
+
+
         // constructor for copying a template instance of a UINode
         public UINode(UINode template) : this()
         {
@@ -67,12 +86,14 @@ namespace Scoundrel.Code
             foreach (UINode child in children)
                 child.Draw(spriteBatch, graphicsDevice);
         }
-        // calculates and sets its size and position, as well as
-        // the size and position of all of its children
+        // calculates and sets this node's size and position, as well as
+        // the size and position of all its children in the process
         public void layout()
         {
-            updateWidths();
-            updateHeights();
+            //UpdateWidth();
+            //UpdateHeight();
+            UpdateSize(Axis.X);
+            UpdateSize(Axis.Y);
             updateXPositions(body.X);
             updateYPositions(body.Y);
         }
@@ -84,43 +105,63 @@ namespace Scoundrel.Code
             
             return this;
         }
-        public virtual int updateWidths(bool switchDirections = false)
+        public virtual int UpdateSize(Axis axis)
+        {
+            // if the size is fixed then just update the children
+            if (getFitType(axis) == FitType.Fixed)
+            {
+                // update each child's width
+                foreach (UINode child in children)
+                    child.UpdateSize(axis);
+
+                return getSize(axis);
+            }
+            else// (the fit type is fit)
+            {
+                // if the axis and layout direction are different, then the size is the max, otherwise it's the total
+                int size = (LayoutDirection != axis) ?
+                    getMaxChildSize(axis) + 2*innerMargin :
+                    getTotalChildSize(axis) + 2*innerMargin + (children.Count - 1)*childGap ;
+                setSize(axis, size);
+                return size;
+            }
+        }
+        public virtual int UpdateWidth()
         {
             // if the size is fixed then just update the children
             if (widthFit == FitType.Fixed)
             {
                 // update each child's width
                 foreach (UINode child in children)
-                    child.updateWidths();
+                    child.UpdateWidth();
 
                 return body.Width;
             }
             // else the fittype is fit
             int maxChildWidth = 0;
             foreach (UINode child in children)
-                maxChildWidth = Max(maxChildWidth, child.updateWidths());
+                maxChildWidth = Max(maxChildWidth, child.UpdateWidth());
 
-            body.Width = maxChildWidth + 2*innerMargin;
-
+            body.Width = maxChildWidth + 2 * innerMargin;
             return body.Width;
         }
-        public virtual int updateHeights(bool switchDirections = false)
+        public virtual int UpdateHeight()
         {
             if (heightFit == FitType.Fixed)
             {
                 // update each child's height
                 foreach (UINode child in children)
-                    child.updateHeights();
+                    child.UpdateHeight();
 
                 return body.Height;
             }
             // else the fittype is fit
             int total = 0;
-            foreach (UINode child in children) total += child.updateHeights();
+            foreach (UINode child in children) total += child.UpdateHeight();
             body.Height = total + 2*innerMargin + (children.Count-1)*childGap;
             return body.Height;
         }
-        public void updateXPositions(int originX, bool switchDirections = false)
+        public void updateXPositions(int originX)
         {
             // set this object's position
             body.X = originX;
@@ -142,7 +183,7 @@ namespace Scoundrel.Code
                     foreach (UINode child in children)
                         child.updateXPositions(originX + (body.Width - child.body.Width)/2);
                 }
-                else // alignment is positive
+                else// (alignment is positive)
                 {
                     // if the children are aligned to the right then
                     // add all of the remaining width minus the inner margin
@@ -151,7 +192,7 @@ namespace Scoundrel.Code
                 }
             }
         }
-        public void updateYPositions(int originY, bool switchDirections = false)
+        public void updateYPositions(int originY)
         {
             // set this object's position
             body.Y = originY;
@@ -176,9 +217,9 @@ namespace Scoundrel.Code
                     // half of the remaining height
                     originY += body.Height / 2 - totalChildHeight / 2;
                 }
-                else // alignment is positive
+                else// (alignment is positive)
                 {   
-                    // if the children are aligned to the right then
+                    // if the children are aligned to the bottom then
                     // add all of the remaining height minus the inner margin
                     originY += body.Height - totalChildHeight - innerMargin;
                 }
