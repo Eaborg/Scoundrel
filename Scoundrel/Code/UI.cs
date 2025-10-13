@@ -37,7 +37,6 @@ namespace Scoundrel.Code
         public Alignment xAlignment = Alignment.Negative; // how it should position its children left-right
         public Alignment yAlignment = Alignment.Negative;   // how it should position its children up-down
         public Color color = Color.Transparent; // the relevant colour of the UI object
-        public Axis LayoutDirection = Axis.Y;
 
         // constructor for copying a template instance of a UINode
         public UINode(UINode template) : this()
@@ -51,7 +50,6 @@ namespace Scoundrel.Code
             xAlignment = template.xAlignment;
             yAlignment = template.yAlignment;
             color = template.color;
-            LayoutDirection = template.LayoutDirection;
         }
 
         // draw method. This changes depending on the kind of object it is.
@@ -84,7 +82,7 @@ namespace Scoundrel.Code
             
             return this;
         }
-        public virtual int updateWidths(bool switchDirections = false)
+        public virtual int updateWidths()
         {
             // if the size is fixed then just update the children
             if (widthFit == FitType.Fixed)
@@ -104,7 +102,7 @@ namespace Scoundrel.Code
 
             return body.Width;
         }
-        public virtual int updateHeights(bool switchDirections = false)
+        public virtual int updateHeights()
         {
             if (heightFit == FitType.Fixed)
             {
@@ -120,7 +118,7 @@ namespace Scoundrel.Code
             body.Height = total + 2*innerMargin + (children.Count-1)*childGap;
             return body.Height;
         }
-        public void updateXPositions(int originX, bool switchDirections = false)
+        public void updateXPositions(int originX)
         {
             // set this object's position
             body.X = originX;
@@ -151,7 +149,7 @@ namespace Scoundrel.Code
                 }
             }
         }
-        public void updateYPositions(int originY, bool switchDirections = false)
+        public void updateYPositions(int originY)
         {
             // set this object's position
             body.Y = originY;
