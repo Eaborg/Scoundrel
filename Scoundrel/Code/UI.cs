@@ -183,66 +183,6 @@ namespace Scoundrel.Code
                     return;
                 }
             }
-
-            /* depreciated (didn't stack elements when aligned negative in the layout direction, and repeated code)
-            if(alignment == Alignment.Negative)
-            {
-                anchor += innerMargin;
-                foreach (UINode child in children)
-                    child.UpdatePosition(axis, anchor);
-
-                return;
-            }
-            else if (alignment == Alignment.Centred)
-            {
-                if (axis == LayoutDirection)
-                {
-
-                    foreach (UINode child in children)
-                    {
-                        child.UpdatePosition(axis, anchor);
-                        anchor += child.getSize(axis) + childGap;
-                    }
-
-                    return;
-                }
-                else//(axis!=layoutDirection)
-                {
-                    int size = getSize(axis);
-                    foreach (UINode child in children)
-                        child.UpdatePosition(axis, anchor + ((size - child.getSize(axis)) / 2) );
-
-                    return;
-                }
-            }
-            else//(alignment == Alignment.Positive)
-            {
-                if (axis == LayoutDirection)
-                {
-                    int totalChildSize = 0;
-                    foreach (UINode child in children)
-                        totalChildSize += child.getSize(axis);
-
-                    anchor += getSize(axis) - totalChildSize - innerMargin;
-
-                    foreach (UINode child in children)
-                    {
-                        child.UpdatePosition(axis, anchor);
-                        anchor += child.getSize(axis) + childGap;
-                    }
-
-                    return;
-                }
-                else//(axis!=layoutDirection)
-                {
-                    int size = getSize(axis);
-                    foreach (UINode child in children)
-                        child.UpdatePosition(axis, anchor + (size - child.getSize(axis) - innerMargin) );
-
-                    return;
-                }
-            }
-            */
         }
 
 
