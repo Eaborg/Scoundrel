@@ -35,7 +35,6 @@ namespace Scoundrel.Code
         public Alignment xAlignment = Alignment.Negative; // how it should position its children left-right
         public Alignment yAlignment = Alignment.Negative;   // how it should position its children up-down
         public Color color = Color.Transparent; // the relevant colour of the UI object
-        public Axis LayoutDirection = Axis.Y;
 
         // wrappers for getting/setting the size and position of objects on arbitrary axes
         public FitType getFitType(Axis axis) => 
@@ -70,7 +69,6 @@ namespace Scoundrel.Code
             xAlignment = template.xAlignment;
             yAlignment = template.yAlignment;
             color = template.color;
-            LayoutDirection = template.LayoutDirection;
         }
 
         // draw method. This changes depending on the kind of object it is.
