@@ -622,13 +622,6 @@ namespace Scoundrel
             if (currentGameState == GameState.Gameplay_Active)
             {
                 // draw the UI
-                /*_spriteBatch.DrawString(
-                    Proto_30,
-                    $"Weapon selected: {playerIsUsingWeapon}\nHealth: {health.ToString()}",
-                    new Vector2(100, 100),
-                    Color.White
-                );*/
-
                 healthText.setText($"Health: {health}");
                 hudUI.layout();
                 hudUI.Draw(_spriteBatch, GraphicsDevice);
