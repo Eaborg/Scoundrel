@@ -3,8 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using static System.Math;
 
 namespace Scoundrel.Code
@@ -38,6 +36,27 @@ namespace Scoundrel.Code
         public Alignment yAlignment = Alignment.Negative;   // how it should position its children up-down
         public Color color = Color.Transparent; // the relevant colour of the UI object
 
+        // wrappers for getting/setting the size and position of objects on arbitrary axes
+        public FitType getFitType(Axis axis) => 
+            axis == Axis.X ? widthFit : heightFit;
+        public Alignment getAlignment(Axis axis) =>
+            axis == Axis.X ? xAlignment : yAlignment;
+
+        // rectangle-specific wrappers
+        public int getSize(Axis axis) => 
+            axis==Axis.X? body.Width : body.Height;
+        public void setSize(Axis axis, int size) 
+        { if (axis == Axis.X) body.Width = size; else body.Height = size; }
+        public int getPos(Axis axis) => 
+            axis == Axis.X ? body.X : body.Y;
+        public void setPos(Axis axis, int pos) 
+        { if (axis == Axis.X) body.X = pos; else body.Y = pos; }
+        // aggregate functions for child sizing
+        public int updateChildSizes_Max(Axis axis) =>
+            Enumerable.Aggregate(children, Int32.MinValue, (int total, UINode node)=>Max(total, node.UpdateSize(axis)) );
+        public int updateChildSizes_Total(Axis axis) =>
+            Enumerable.Aggregate(children, 0, (int total, UINode node) => (total + node.UpdateSize(axis)) );
+
         // constructor for copying a template instance of a UINode
         public UINode(UINode template) : this()
         {
@@ -65,14 +84,14 @@ namespace Scoundrel.Code
             foreach (UINode child in children)
                 child.Draw(spriteBatch, graphicsDevice);
         }
-        // calculates and sets its size and position, as well as
-        // the size and position of all of its children
+        // calculates and sets this node's size and position, as well as
+        // the size and position of all its children in the process
         public void layout()
         {
-            updateWidths();
-            updateHeights();
-            updateXPositions(body.X);
-            updateYPositions(body.Y);
+            UpdateSize(Axis.X);
+            UpdateSize(Axis.Y);
+            UpdatePosition(Axis.X, body.X);
+            UpdatePosition(Axis.Y, body.Y);
         }
         // method for adding children during the initialization of the UI node
         public UINode Add(params UINode[] elements)
@@ -82,111 +101,85 @@ namespace Scoundrel.Code
             
             return this;
         }
-        public virtual int updateWidths()
+        public virtual int UpdateSize(Axis axis)
         {
             // if the size is fixed then just update the children
-            if (widthFit == FitType.Fixed)
+            if (getFitType(axis) == FitType.Fixed)
             {
                 // update each child's width
                 foreach (UINode child in children)
-                    child.updateWidths();
+                    child.UpdateSize(axis);
 
-                return body.Width;
+                return getSize(axis);
             }
-            // else the fittype is fit
-            int maxChildWidth = 0;
-            foreach (UINode child in children)
-                maxChildWidth = Max(maxChildWidth, child.updateWidths());
+            else// (the fit type is fit)
+            {
+                // if the axis and layout direction are different, then the size is the max, otherwise it's the total
+                int size = (LayoutDirection != axis) ?
+                    updateChildSizes_Max(axis) + 2*innerMargin :
+                    updateChildSizes_Total(axis) + 2*innerMargin + (children.Count - 1)*childGap ;
 
-            body.Width = maxChildWidth + 2*innerMargin;
-
-            return body.Width;
+                setSize(axis, size);
+                return size;
+            }
         }
-        public virtual int updateHeights()
+        public virtual void UpdatePosition(Axis axis, int anchor)
         {
-            if (heightFit == FitType.Fixed)
-            {
-                // update each child's height
-                foreach (UINode child in children)
-                    child.updateHeights();
+            // set its own position
+            setPos(axis, anchor);
 
-                return body.Height;
-            }
-            // else the fittype is fit
-            int total = 0;
-            foreach (UINode child in children) total += child.updateHeights();
-            body.Height = total + 2*innerMargin + (children.Count-1)*childGap;
-            return body.Height;
-        }
-        public void updateXPositions(int originX)
-        {
-            // set this object's position
-            body.X = originX;
+            Alignment alignment = getAlignment(axis);
 
-            // find where to position all of it's children.
-            if (xAlignment == Alignment.Negative)
+            if(axis == LayoutDirection)
             {
-                // if this object is aligned to the left
-                // then the children only need to take into account the inner margin
-                foreach (UINode child in children)
-                    child.updateXPositions(originX + innerMargin);
-            }
-            else//(fittype is fit and alignment isn't negative)
-            {
-                if (xAlignment == Alignment.Centred)
+                if (alignment == Alignment.Negative)
+                    anchor += innerMargin;
+                else
                 {
-                    // if children are aligned to the middle then
-                    // half of the remaining width needs to be added
+                    int totalChildSize = 0;
                     foreach (UINode child in children)
-                        child.updateXPositions(originX + (body.Width - child.body.Width)/2);
-                }
-                else // alignment is positive
-                {
-                    // if the children are aligned to the right then
-                    // add all of the remaining width minus the inner margin
-                    foreach (UINode child in children)
-                        child.updateXPositions(originX + body.Width - child.body.Width - innerMargin);
-                }
-            }
-        }
-        public void updateYPositions(int originY)
-        {
-            // set this object's position
-            body.Y = originY;
+                        totalChildSize += child.getSize(axis);
 
-            // handle the Y positioning of it's children
-            if (heightFit == FitType.Fit || yAlignment == Alignment.Negative)
-            {
-                // if this object fits to it's children or is aligned to the top
-                // then the children only need to take into account the inner margin
-                originY += innerMargin;
-            }
-            else//(fittype is fit and alignment isn't negative)
-            {
-                // find the total height of it's children
-                int totalChildHeight = 0;
+                    if (alignment == Alignment.Centred)
+                        anchor += (getSize(axis) - totalChildSize) / 2;
+                    else//(alignment == Alignment.Positive)
+                        anchor += getSize(axis) - totalChildSize - innerMargin;
+                }
+
                 foreach (UINode child in children)
-                    totalChildHeight += child.body.Height;
-
-                if (yAlignment == Alignment.Centred)
                 {
-                    // if children are aligned to the middle then you need to add
-                    // half of the remaining height
-                    originY += body.Height / 2 - totalChildHeight / 2;
+                    child.UpdatePosition(axis, anchor);
+                    anchor += child.getSize(axis) + childGap;
                 }
-                else // alignment is positive
-                {   
-                    // if the children are aligned to the right then
-                    // add all of the remaining height minus the inner margin
-                    originY += body.Height - totalChildHeight - innerMargin;
-                }
-            }
 
-            // set all of it's children's positions
-            for (int i = 0; i < children.Count(); i++)
+                return;
+            }
+            else//(axis != LayoutDirection)
             {
-                children[i].updateYPositions(originY);
-                originY += children[i].body.Height + childGap;
+                if (alignment == Alignment.Negative)
+                {
+                    anchor += innerMargin;
+                    foreach (UINode child in children)
+                        child.UpdatePosition(axis, anchor);
+
+                    return;
+                }
+                else if (alignment == Alignment.Centred)
+                {
+                    int size = getSize(axis);
+                    foreach (UINode child in children)
+                        child.UpdatePosition(axis, anchor + ((size - child.getSize(axis)) / 2));
+
+                    return;
+                }
+                else//(axis!=layoutDirection)
+                {
+                    int size = getSize(axis);
+                    foreach (UINode child in children)
+                        child.UpdatePosition(axis, anchor + (size - child.getSize(axis) - innerMargin));
+
+                    return;
+                }
             }
         }
     }
