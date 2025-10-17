@@ -3,8 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using static System.Math;
 
 namespace Scoundrel.Code
@@ -42,6 +40,10 @@ namespace Scoundrel.Code
         // wrappers for getting/setting the size and position of objects on arbitrary axes
         public FitType getFitType(Axis axis) => 
             axis == Axis.X ? widthFit : heightFit;
+        public Alignment getAlignment(Axis axis) =>
+            axis == Axis.X ? xAlignment : yAlignment;
+
+        // rectangle-specific wrappers
         public int getSize(Axis axis) => 
             axis==Axis.X? body.Width : body.Height;
         public void setSize(Axis axis, int size) 
@@ -51,12 +53,10 @@ namespace Scoundrel.Code
         public void setPos(Axis axis, int pos) 
         { if (axis == Axis.X) body.X = pos; else body.Y = pos; }
         // aggregate functions for child sizing
-        public int getMaxChildSize(Axis axis) =>
+        public int updateChildSizes_Max(Axis axis) =>
             Enumerable.Aggregate(children, Int32.MinValue, (int total, UINode node)=>Max(total, node.UpdateSize(axis)) );
-        public int getTotalChildSize(Axis axis) =>
+        public int updateChildSizes_Total(Axis axis) =>
             Enumerable.Aggregate(children, 0, (int total, UINode node) => (total + node.UpdateSize(axis)) );
-
-
 
         // constructor for copying a template instance of a UINode
         public UINode(UINode template) : this()
@@ -90,12 +90,10 @@ namespace Scoundrel.Code
         // the size and position of all its children in the process
         public void layout()
         {
-            //UpdateWidth();
-            //UpdateHeight();
             UpdateSize(Axis.X);
             UpdateSize(Axis.Y);
-            updateXPositions(body.X);
-            updateYPositions(body.Y);
+            UpdatePosition(Axis.X, body.X);
+            UpdatePosition(Axis.Y, body.Y);
         }
         // method for adding children during the initialization of the UI node
         public UINode Add(params UINode[] elements)
@@ -120,47 +118,134 @@ namespace Scoundrel.Code
             {
                 // if the axis and layout direction are different, then the size is the max, otherwise it's the total
                 int size = (LayoutDirection != axis) ?
-                    getMaxChildSize(axis) + 2*innerMargin :
-                    getTotalChildSize(axis) + 2*innerMargin + (children.Count - 1)*childGap ;
+                    updateChildSizes_Max(axis) + 2*innerMargin :
+                    updateChildSizes_Total(axis) + 2*innerMargin + (children.Count - 1)*childGap ;
+
                 setSize(axis, size);
                 return size;
             }
         }
-        public virtual int UpdateWidth()
+        public virtual void UpdatePosition(Axis axis, int anchor)
         {
-            // if the size is fixed then just update the children
-            if (widthFit == FitType.Fixed)
+            // set its own position
+            setPos(axis, anchor);
+
+            Alignment alignment = getAlignment(axis);
+
+            if(axis == LayoutDirection)
             {
-                // update each child's width
+                if (alignment == Alignment.Negative)
+                    anchor += innerMargin;
+                else
+                {
+                    int totalChildSize = 0;
+                    foreach (UINode child in children)
+                        totalChildSize += child.getSize(axis);
+
+                    if (alignment == Alignment.Centred)
+                        anchor += (getSize(axis) - totalChildSize) / 2;
+                    else//(alignment == Alignment.Positive)
+                        anchor += getSize(axis) - totalChildSize - innerMargin;
+                }
+
                 foreach (UINode child in children)
-                    child.UpdateWidth();
+                {
+                    child.UpdatePosition(axis, anchor);
+                    anchor += child.getSize(axis) + childGap;
+                }
 
-                return body.Width;
+                return;
             }
-            // else the fittype is fit
-            int maxChildWidth = 0;
-            foreach (UINode child in children)
-                maxChildWidth = Max(maxChildWidth, child.UpdateWidth());
-
-            body.Width = maxChildWidth + 2 * innerMargin;
-            return body.Width;
-        }
-        public virtual int UpdateHeight()
-        {
-            if (heightFit == FitType.Fixed)
+            else//(axis != LayoutDirection)
             {
-                // update each child's height
-                foreach (UINode child in children)
-                    child.UpdateHeight();
+                if (alignment == Alignment.Negative)
+                {
+                    anchor += innerMargin;
+                    foreach (UINode child in children)
+                        child.UpdatePosition(axis, anchor);
 
-                return body.Height;
+                    return;
+                }
+                else if (alignment == Alignment.Centred)
+                {
+                    int size = getSize(axis);
+                    foreach (UINode child in children)
+                        child.UpdatePosition(axis, anchor + ((size - child.getSize(axis)) / 2));
+
+                    return;
+                }
+                else//(axis!=layoutDirection)
+                {
+                    int size = getSize(axis);
+                    foreach (UINode child in children)
+                        child.UpdatePosition(axis, anchor + (size - child.getSize(axis) - innerMargin));
+
+                    return;
+                }
             }
-            // else the fittype is fit
-            int total = 0;
-            foreach (UINode child in children) total += child.UpdateHeight();
-            body.Height = total + 2*innerMargin + (children.Count-1)*childGap;
-            return body.Height;
+
+            /* depreciated (didn't stack elements when aligned negative in the layout direction, and repeated code)
+            if(alignment == Alignment.Negative)
+            {
+                anchor += innerMargin;
+                foreach (UINode child in children)
+                    child.UpdatePosition(axis, anchor);
+
+                return;
+            }
+            else if (alignment == Alignment.Centred)
+            {
+                if (axis == LayoutDirection)
+                {
+
+                    foreach (UINode child in children)
+                    {
+                        child.UpdatePosition(axis, anchor);
+                        anchor += child.getSize(axis) + childGap;
+                    }
+
+                    return;
+                }
+                else//(axis!=layoutDirection)
+                {
+                    int size = getSize(axis);
+                    foreach (UINode child in children)
+                        child.UpdatePosition(axis, anchor + ((size - child.getSize(axis)) / 2) );
+
+                    return;
+                }
+            }
+            else//(alignment == Alignment.Positive)
+            {
+                if (axis == LayoutDirection)
+                {
+                    int totalChildSize = 0;
+                    foreach (UINode child in children)
+                        totalChildSize += child.getSize(axis);
+
+                    anchor += getSize(axis) - totalChildSize - innerMargin;
+
+                    foreach (UINode child in children)
+                    {
+                        child.UpdatePosition(axis, anchor);
+                        anchor += child.getSize(axis) + childGap;
+                    }
+
+                    return;
+                }
+                else//(axis!=layoutDirection)
+                {
+                    int size = getSize(axis);
+                    foreach (UINode child in children)
+                        child.UpdatePosition(axis, anchor + (size - child.getSize(axis) - innerMargin) );
+
+                    return;
+                }
+            }
+            */
         }
+
+
         public void updateXPositions(int originX)
         {
             // set this object's position

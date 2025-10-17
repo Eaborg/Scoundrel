@@ -185,12 +185,6 @@ namespace Scoundrel
                 (48*5 + 3*10 + 20),
                 (64*2 + 1*10)
             );
-            /* depriciated
-                cardOrigin = new Vector2(
-                    (float)(windowSize.X)/(2*cardSF) - (gameSize.X/2),
-                    (float)(windowSize.Y)/(2*cardSF) - (gameSize.Y/2)
-                );
-            */
             cardOrigin = windowSize.ToVector2() / (2 * cardSF) - gameSize / 2;
             weaponPosition = new Vector2(
                 48 + 30,
@@ -322,18 +316,7 @@ namespace Scoundrel
             mouseState = Mouse.GetState();
             bool leftClickWasReleased = lastMouseState.LeftButton == ButtonState.Pressed && mouseState.LeftButton == ButtonState.Released;
 
-            // depreciated code
-            /*List<Keys> fallingEdgeKeys = new List<Keys>();
-
-            // get all of the keys which were pressed last frame, but not this frame
-            foreach (Keys key in lastKeyState.GetPressedKeys())
-            {
-                if (!keyState.IsKeyDown(key))
-                {
-                    fallingEdgeKeys.Add(key);
-                }
-            }*/
-
+            // The update-loop side of the state machine
             switch (currentGameState)
             {
                 case GameState.Menu_Main:
