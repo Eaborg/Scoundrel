@@ -1,6 +1,6 @@
 # Intro
 This is my first proper project - creating an implementation of the "Scoundrel" card game using the Monogame framework in C#, with some additional QOL features.  
-As it's my first project, it's architechture, readability and implementation are likely questionable. If you have any suggestions to fix it or any of the code, please don't hesitate to let me know.  
+While I tried my best to code smartly, as it's my first project it's architechture, readability and implementation are likely slightly questionable. If you have any suggestions to fix or improve any of these, please don't hesitate to let me know.  
 This github repository was made a ways into the development. Thus, the initial commit is a bit beefy, and this repo doesn't have all of the development history.
 
 For more info on Scoundrel, visit http://stfj.net/art/2011/Scoundrel.pdf  
@@ -16,7 +16,19 @@ The current art asset pack used is the "(Pixel) Poker cards" asset pack by Ivory
 - [ ] Replay viewer
 - [ ] Save file loading
 - [ ] Leaderboard
-- [ ] UI
+- [ ] Full UI
+- [ ] Tutorial
+
+## Known issues
+These are some issues with the code I know of, however they are all currently too much of a pain to change and/or too minor to affect the final program much
+
+- The deck doesn't dissapear, even when there's no cards left
+- At the end of a game, fleeing from a room can cause the same cards to be put away and drawn at the same time, causing the same cards to exist in two different places at once (visually, not in memory)
+- The initialization of things is all over the place
+- The way the cards are stored and passed around in memory is clunky. Decoupling the data of the cards, the logical position of the cards on the board, and the visual position of the cards onscreen would result in cleaner code and less possible bugs. Taking a more data-oriented approach may also be beneficial.
+- The visuals of the program bug out while the window is being resized
+- Parts of the program may have performance inefficiencies (though the game runs smoothly, so that doesn't seem to be a big issue yet)
+- It can sometimes be hard to predict which file something will be in in the code
 
 ## Basic monogame info
 The MonoGame C# framework handles common needs in games, such as graphics, time, etc.  
