@@ -1,6 +1,7 @@
 # Intro
 This is my first proper project - creating an implementation of the "Scoundrel" card game using the Monogame framework in C#, with some additional QOL features.  
-As it's my first project, it's architechture, readability and implementation are likely questionable. If you have any suggestions to fix it or any of the code, please don't hesitate to let me know.
+As it's my first project, it's architechture, readability and implementation are likely questionable. If you have any suggestions to fix it or any of the code, please don't hesitate to let me know.  
+This github repository was made a ways into the development. Thus, the initial commit is a bit beefy, and this repo doesn't have all of the development history.
 
 For more info on Scoundrel, visit http://stfj.net/art/2011/Scoundrel.pdf  
 The current art asset pack used is the "(Pixel) Poker cards" asset pack by IvoryRed, which can be found at https://ivoryred.itch.io/pixel-poker-cards
