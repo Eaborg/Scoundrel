@@ -16,6 +16,8 @@
 /// Game1 Utilities.cs stores the helper functions specific to to the Game1 class.
 /// Game Objects.cs stores the objects (classes, structs & enums) which are used by the gameplay.
 /// General Utilities.cs stores helper functions potentially usable outside of this project.
+/// UI.cs handles the UI layout engine
+/// Replays.cs handles the logic for the replay feature
 /// Program.cs simply holds the main() function which creates an instance of the game and runs it.
 /// 
 /// That's all the information you need to understand the basic layout of the project.
