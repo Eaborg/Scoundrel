@@ -334,18 +334,18 @@ namespace Scoundrel
                         }
                         else button.UIelement.color = Color.White;
                     }
-                break;
+                    break;
 
 
                 case GameState.Gameplay_Active:
                     UpdateGameplay(gameTime);
-                break;
+                    break;
 
 
                 case GameState.Gameplay_Paused:
                     if (Keys.P.isFallingEdge(lastKeyState, keyState))
                         currentGameState = GameState.Gameplay_Active;
-                break;
+                    break;
 
 
                 case GameState.Gameplay_Ended:
@@ -358,7 +358,13 @@ namespace Scoundrel
                     durabilityCard?.UpdateTweens(deltaTime);
                     // collect the garbage
                     collectGarbage(garbage);
-                break;
+                    break;
+
+
+                case GameState.ReplayView:
+
+                    break;
+
             }   
             
             base.Update(gameTime);
@@ -372,7 +378,7 @@ namespace Scoundrel
             Gameplay_Active,
             Gameplay_Paused,
             Gameplay_Ended,
-            Replay,
+            ReplayView,
         }
         protected void UpdateGameplay(GameTime gameTime)
         {
@@ -552,7 +558,7 @@ namespace Scoundrel
                 }
 
                 // death handling. this will have to be implemented once game states are added
-                if(health <=0)
+                if(health <= 0)
                 {
                     // flatten the deck into the negative sum of all the enemie's values
                     score = deck.Aggregate(0, 
@@ -567,7 +573,7 @@ namespace Scoundrel
                 }
 
 
-                // room progression. check if the next room should be drawn
+                // room progression. check if the next room should be drawn from the deck
                 if(room.CountNonNulls()<=1 && deck.Count()>0)
                 {
                     // draw a card for every empty space, unless there's no more cards in the deck
@@ -583,9 +589,7 @@ namespace Scoundrel
                 // if there's no cards left in both the room and deck,
                 // then the game has ended. Here's the code which handles this
                 if(room.CountNonNulls()==0 && deck.Count() == 0)
-                {
                     currentGameState = GameState.Gameplay_Ended;
-                }
 
             }
 

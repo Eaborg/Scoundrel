@@ -38,7 +38,6 @@ namespace Scoundrel.Code
             get => (bytePointer<bytes.Length);
         }
 
-
         // used to consume and return the next nibble in the stream
         public byte nextNibble()
         {
